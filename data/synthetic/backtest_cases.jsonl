@@ -1,0 +1,6 @@
+{"timestamp":"2026-08-25T09:00:00Z","actual_risk":false,"prediction":0.18,"alert":false}
+{"timestamp":"2026-08-25T09:05:00Z","actual_risk":false,"prediction":0.31,"alert":false}
+{"timestamp":"2026-08-25T09:10:00Z","actual_risk":false,"prediction":0.52,"alert":false}
+{"timestamp":"2026-08-25T09:15:00Z","actual_risk":false,"prediction":0.73,"alert":true}
+{"timestamp":"2026-08-25T09:20:00Z","actual_risk":true,"prediction":0.81,"alert":true}
+{"timestamp":"2026-08-25T09:25:00Z","actual_risk":true,"prediction":0.87,"alert":true}

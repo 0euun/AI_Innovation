@@ -1,0 +1,9 @@
+{
+  "name": "mobius",
+  "private": true,
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev:web": "node node_modules/next/dist/bin/next dev apps/web",
+    "build:web": "node node_modules/next/dist/bin/next build apps/web"
+  }
+}

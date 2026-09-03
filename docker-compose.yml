@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: mobius
+      POSTGRES_USER: mobius
+      POSTGRES_PASSWORD: mobius_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/mobiusneo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+
+  api:
+    build: ./apps/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://mobius:mobius_local@postgres:5432/mobius
+      REDIS_URL: redis://redis:6379/0
+      MOBIUS_MODEL_DIR: /models/text-classifier-full/best
+      MOBIUS_MULTILABEL_MODEL_DIR: /models/multilabel-classifier/best
+      MOBIUS_JWT_SECRET: ${MOBIUS_JWT_SECRET:-mobius-development-secret-change-in-production}
+      MOBIUS_JWT_TTL_MINUTES: ${MOBIUS_JWT_TTL_MINUTES:-60}
+      MOBIUS_ALERT_COOLDOWN_MINUTES: ${MOBIUS_ALERT_COOLDOWN_MINUTES:-30}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8000/v1/auth/callback/google}
+      WEB_APP_URL: ${WEB_APP_URL:-http://localhost:3000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      NEO4J_HTTP_URL: http://neo4j:7474
+      NEO4J_BASIC_AUTH: bmVvNGo6bW9iaXVzbmVvNGo=
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - neo4j
+    volumes:
+      - ./artifacts/text-classifier-full:/models/text-classifier-full:ro
+      - ./artifacts/multilabel-classifier:/models/multilabel-classifier:ro
+
+volumes:
+  postgres_data:
+  neo4j_data:

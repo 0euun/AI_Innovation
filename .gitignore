@@ -1,0 +1,39 @@
+# Secrets: commit the template only.
+.env
+.env.*
+!.env.example
+.venv-training
+
+# JavaScript / Next.js generated files
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Python environments, caches and test output
+.venv*/
+.venv-training
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local ML data, downloaded model weights and training checkpoints
+data/raw/
+data/processed/
+artifacts/
+
+# Local tools, logs and operating-system files
+.serena/
+.vscode/
+.idea/
+.codex/
+*.log
+*.sqlite
+*.sqlite3
+.DS_Store
+Thumbs.db

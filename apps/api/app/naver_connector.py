@@ -1,0 +1,40 @@
+"""NAVER Search API 결과를 확산 신호 이벤트로 정규화한다."""
+import html
+import json
+import os
+import re
+from datetime import UTC, datetime
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
+BASE_URL = "https://naverapihub.apigw.ntruss.com/search/v1"
+ALLOWED_SOURCES = {"news", "blog", "cafearticle", "kin", "webkr"}
+
+
+def status() -> dict:
+    return {"provider": "naver_search", "configured": bool(os.getenv("NAVER_CLIENT_ID") and os.getenv("NAVER_CLIENT_SECRET")), "mode": "official_api", "scope": "search result signals"}
+
+
+def _clean(value: str) -> str:
+    return html.unescape(re.sub(r"<[^>]+>", "", value or "")).strip()
+
+
+def _search(source: str, query: str, display: int) -> dict:
+    if source not in ALLOWED_SOURCES: raise ValueError(f"지원하지 않는 NAVER 검색 소스: {source}")
+    client_id, client_secret = os.getenv("NAVER_CLIENT_ID"), os.getenv("NAVER_CLIENT_SECRET")
+    if not client_id or not client_secret: raise RuntimeError("NAVER_CLIENT_ID/SECRET 설정이 필요합니다.")
+    request = Request(f"{BASE_URL}/{source}?{urlencode({'query': query, 'display': display, 'sort': 'date'})}", headers={"X-NCP-APIGW-API-KEY-ID": client_id, "X-NCP-APIGW-API-KEY": client_secret})
+    with urlopen(request, timeout=15) as response: return json.loads(response.read())
+
+
+def collect(query: str, sources: list[str], display: int, target_id: str) -> list[dict]:
+    events = []
+    for source in sources:
+        for index, item in enumerate(_search(source, query, display).get("items", [])):
+            title, text = _clean(item.get("title", "")), _clean(item.get("description", ""))
+            if not (title or text): continue
+            date = item.get("pubDate") or item.get("postdate") or datetime.now(UTC).isoformat()
+            if len(date) == 8: date = f"{date[:4]}-{date[4:6]}-{date[6:]}T00:00:00Z"
+            url = item.get("originallink") or item.get("link", "")
+            events.append({"event_id": f"naver:{source}:{hash(url or title + str(index))}", "occurred_at": date, "platform": f"naver_{source}", "author_ref": "naver-search-result", "target_ref": target_id, "text": f"{title} {text}".strip(), "hashtags": [], "likes": 0, "shares": 0, "comments": 0, "source_url": url})
+    return events
