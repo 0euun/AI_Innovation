@@ -49,8 +49,6 @@ FastAPI가 실행되면 Swagger UI는 `http://localhost:8000/docs`에서 확인�
 
 API 상태 확인: `http://localhost:8000/health`
 
-상세 실행 방법은 [RUNBOOK.md](docs/RUNBOOK.md), 전체 요청·응답 명세는 [API_SPEC.md](docs/API_SPEC.md)를 참고합니다.
-
 ## 문서
 
 - [PROJECT_REPORT.md](docs/PROJECT_REPORT.md): 문제정의·해결방안·결론(평가 결과 포함) 종합 보고서
