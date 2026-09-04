@@ -6,6 +6,7 @@ import os
 import re
 import hashlib
 from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -23,6 +24,17 @@ def _clean(value: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", value or "")).strip()
 
 
+def normalize_date(value: str | None) -> str:
+    if not value:
+        return datetime.now(UTC).isoformat()
+    if len(value) == 8 and value.isdigit():
+        return f"{value[:4]}-{value[4:6]}-{value[6:]}T00:00:00+00:00"
+    try:
+        return parsedate_to_datetime(value).isoformat()
+    except (TypeError, ValueError):
+        return value
+
+
 def _search(source: str, query: str, display: int) -> dict:
     if source not in ALLOWED_SOURCES: raise ValueError(f"지원하지 않는 NAVER 검색 소스: {source}")
     client_id, client_secret = os.getenv("NAVER_CLIENT_ID"), os.getenv("NAVER_CLIENT_SECRET")
@@ -37,8 +49,7 @@ def collect(query: str, sources: list[str], display: int, target_id: str) -> lis
         for index, item in enumerate(_search(source, query, display).get("items", [])):
             title, text = _clean(item.get("title", "")), _clean(item.get("description", ""))
             if not (title or text): continue
-            date = item.get("pubDate") or item.get("postdate") or datetime.now(UTC).isoformat()
-            if len(date) == 8: date = f"{date[:4]}-{date[4:6]}-{date[6:]}T00:00:00Z"
+            date = normalize_date(item.get("pubDate") or item.get("postdate"))
             url = item.get("originallink") or item.get("link", "")
             identity = hashlib.sha256((url or title + str(index)).encode()).hexdigest()[:24]
             events.append({"event_id": f"naver:{source}:{identity}", "occurred_at": date, "platform": f"naver_{source}", "author_ref": "naver-search-result", "target_ref": target_id, "text": mask_text(f"{title} {text}".strip()), "hashtags": [], "likes": 0, "shares": 0, "comments": 0, "source_url": url})
